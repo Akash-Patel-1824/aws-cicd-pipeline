@@ -6,6 +6,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -27,10 +28,14 @@ pipeline {
             steps {
                 sh '''
                     docker rm -f aws-cicd-test || true
-                    docker run -d --name aws-cicd-test \
-                    -p 8081:80 $DOCKER_IMAGE:$BUILD_NUMBER
+
+                    docker run -d \
+                    --name aws-cicd-test \
+                    -p 8081:80 \
+                    $DOCKER_IMAGE:$BUILD_NUMBER
 
                     sleep 5
+
                     curl -f http://localhost:8081
 
                     docker rm -f aws-cicd-test
@@ -58,6 +63,34 @@ pipeline {
                     '''
                 }
             }
+        }
+
+        stage('Deploy to AWS EC2') {
+            steps {
+                sshagent(['app-server-ssh']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ubuntu@18.209.21.133 '
+                            sudo docker pull $DOCKER_IMAGE:latest &&
+                            (sudo docker rm -f aws-cicd-app || true) &&
+                            sudo docker run -d \
+                            --restart unless-stopped \
+                            --name aws-cicd-app \
+                            -p 80:80 \
+                            $DOCKER_IMAGE:latest
+                        '
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'CI/CD Pipeline completed successfully!'
+        }
+
+        failure {
+            echo 'CI/CD Pipeline failed. Check the console output.'
         }
     }
 }
