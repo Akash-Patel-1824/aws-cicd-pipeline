@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+
     environment {
         DOCKER_IMAGE = 'akashpatel24/newimage'
     }
@@ -18,8 +22,8 @@ pipeline {
             steps {
                 sh '''
                     docker build \
-                    -t $DOCKER_IMAGE:$BUILD_NUMBER \
-                    -t $DOCKER_IMAGE:latest .
+                        -t ${DOCKER_IMAGE}:${BUILD_NUMBER} \
+                        -t ${DOCKER_IMAGE}:latest .
                 '''
             }
         }
@@ -27,12 +31,14 @@ pipeline {
         stage('Test Docker Image') {
             steps {
                 sh '''
+                    set -e
+
                     docker rm -f aws-cicd-test || true
 
                     docker run -d \
-                    --name aws-cicd-test \
-                    -p 8081:80 \
-                    $DOCKER_IMAGE:$BUILD_NUMBER
+                        --name aws-cicd-test \
+                        -p 8081:80 \
+                        ${DOCKER_IMAGE}:${BUILD_NUMBER}
 
                     sleep 5
 
@@ -53,11 +59,14 @@ pipeline {
                     )
                 ]) {
                     sh '''
-                        echo "$DOCKER_PASS" | docker login \
-                        -u "$DOCKER_USER" --password-stdin
+                        set -e
 
-                        docker push $DOCKER_IMAGE:$BUILD_NUMBER
-                        docker push $DOCKER_IMAGE:latest
+                        echo "$DOCKER_PASS" | docker login \
+                            -u "$DOCKER_USER" \
+                            --password-stdin
+
+                        docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                        docker push ${DOCKER_IMAGE}:latest
 
                         docker logout
                     '''
@@ -69,15 +78,15 @@ pipeline {
             steps {
                 sshagent(['app-server-ssh']) {
                     sh '''
-                        ssh -o StrictHostKeyChecking=no ubuntu@18.209.21.133 '
-                            sudo docker pull $DOCKER_IMAGE:latest &&
+                        ssh -o StrictHostKeyChecking=no ubuntu@18.209.21.133 "
+                            sudo docker pull akashpatel24/newimage:latest &&
                             (sudo docker rm -f aws-cicd-app || true) &&
                             sudo docker run -d \
-                            --restart unless-stopped \
-                            --name aws-cicd-app \
-                            -p 80:80 \
-                            $DOCKER_IMAGE:latest
-                        '
+                                --restart unless-stopped \
+                                --name aws-cicd-app \
+                                -p 80:80 \
+                                akashpatel24/newimage:latest
+                        "
                     '''
                 }
             }
@@ -86,11 +95,11 @@ pipeline {
 
     post {
         success {
-            echo 'CI/CD Pipeline completed successfully!'
+            echo 'SUCCESS: Complete AWS CI/CD Pipeline!'
         }
 
         failure {
-            echo 'CI/CD Pipeline failed. Check the console output.'
+            echo 'FAILED: Check Jenkins Console Output.'
         }
     }
 }
