@@ -76,9 +76,9 @@ pipeline {
 
         stage('Deploy to AWS EC2') {
             steps {
-                sshagent(['app-server-ssh']) {
+                sshagent(['app-ec2-ssh-key']) {
                     sh '''
-                        ssh -o StrictHostKeyChecking=no ubuntu@54.89.66.204 "
+                        ssh -o StrictHostKeyChecking=no ubuntu@44.216.87.18"
                             sudo docker pull akashpatel24/newimage:latest &&
                             (sudo docker rm -f aws-cicd-app || true) &&
                             sudo docker run -d \
