@@ -131,4 +131,18 @@ Learning Outcomes
 - Docker image building and deployment
 - AWS EC2 deployment using SSH
 - Terraform infrastructure configuration
-- Automated application delivery
+- Automated application delivery 
+
+## Project Screenshots
+
+### 1. Jenkins Pipeline
+![Jenkins Pipeline](AWS-DevOps-Project-Screenshots/01-Jenkins-Pipeline.png)
+
+### 2. GitHub Webhook
+![GitHub Webhook](AWS-DevOps-Project-Screenshots/02-GitHub-Webhook.png)
+
+### 3. AWS EC2
+![AWS EC2](AWS-DevOps-Project-Screenshots/03-AWS-EC2.png)
+
+### 4. Live Application
+![Live Application](AWS-DevOps-Project-Screenshots/04-Live-Application.png)
