@@ -78,7 +78,7 @@ pipeline {
             steps {
                 sshagent(['app-server-ssh']) {
                     sh '''
-                        ssh -o StrictHostKeyChecking=no ubuntu@18.209.21.133 "
+                        ssh -o StrictHostKeyChecking=no ubuntu@54.89.66.204 "
                             sudo docker pull akashpatel24/newimage:latest &&
                             (sudo docker rm -f aws-cicd-app || true) &&
                             sudo docker run -d \
