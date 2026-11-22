@@ -12,6 +12,7 @@ pipeline {
 
     stages {
 
+        // Stage 1: Checkout source code from GitHub
         stage('Checkout') {
             steps {
                 checkout scm
@@ -19,6 +20,7 @@ pipeline {
             }
         }
 
+        // Stage 2: Build Docker image
         stage('Build Docker Image') {
             steps {
                 sh '''
@@ -31,6 +33,7 @@ pipeline {
             }
         }
 
+        // Stage 3: Test Docker image
         stage('Test Docker Image') {
             steps {
                 sh '''
@@ -52,6 +55,7 @@ pipeline {
             }
         }
 
+        // Stage 4: Push image to Docker Hub
         stage('Push to Docker Hub') {
             steps {
                 withCredentials([
@@ -69,6 +73,7 @@ pipeline {
                             --password-stdin
 
                         docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+
                         docker push ${DOCKER_IMAGE}:latest
 
                         docker logout
@@ -77,6 +82,7 @@ pipeline {
             }
         }
 
+        // Stage 5: Deploy application to AWS EC2
         stage('Deploy to AWS EC2') {
             steps {
                 sshagent(['app-ec2-ssh-key']) {
@@ -85,22 +91,18 @@ pipeline {
 
                         ssh -o StrictHostKeyChecking=no \
                             ubuntu@${APP_SERVER_IP} \
-                            'sudo docker pull akashpatel24/newimage:latest &&
-                             (sudo docker rm -f aws-cicd-app || true) &&
-                             sudo docker run -d
-                             --restart unless-stopped
-                             --name aws-cicd-app
-                             -p 80:80
-                             akashpatel24/newimage:latest'
+                            'sudo docker pull akashpatel24/newimage:latest && (sudo docker rm -f aws-cicd-app || true) && sudo docker run -d --restart unless-stopped --name aws-cicd-app -p 80:80 akashpatel24/newimage:latest'
                     '''
                 }
             }
         }
     }
 
+    // Post-build actions
     post {
         success {
             echo 'SUCCESS: Complete AWS CI/CD Pipeline!'
+            echo 'Application deployed successfully to AWS EC2.'
         }
 
         failure {
