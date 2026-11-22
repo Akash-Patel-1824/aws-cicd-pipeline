@@ -7,6 +7,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = 'akashpatel24/newimage'
+        APP_SERVER_IP = '44.216.87.18'
     }
 
     stages {
@@ -21,6 +22,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
+                    set -e
+
                     docker build \
                         -t ${DOCKER_IMAGE}:${BUILD_NUMBER} \
                         -t ${DOCKER_IMAGE}:latest .
@@ -78,15 +81,17 @@ pipeline {
             steps {
                 sshagent(['app-ec2-ssh-key']) {
                     sh '''
-                        ssh -o StrictHostKeyChecking=no ubuntu@44.216.87.18"
-                            sudo docker pull akashpatel24/newimage:latest &&
-                            (sudo docker rm -f aws-cicd-app || true) &&
-                            sudo docker run -d \
-                                --restart unless-stopped \
-                                --name aws-cicd-app \
-                                -p 80:80 \
-                                akashpatel24/newimage:latest
-                        "
+                        set -e
+
+                        ssh -o StrictHostKeyChecking=no \
+                            ubuntu@${APP_SERVER_IP} \
+                            'sudo docker pull akashpatel24/newimage:latest &&
+                             (sudo docker rm -f aws-cicd-app || true) &&
+                             sudo docker run -d
+                             --restart unless-stopped
+                             --name aws-cicd-app
+                             -p 80:80
+                             akashpatel24/newimage:latest'
                     '''
                 }
             }
